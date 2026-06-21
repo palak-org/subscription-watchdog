@@ -39,7 +39,7 @@ This repository provides the **frontend UI** and **data parsing layer** for an A
 
 1. **Clone the repo** (if you haven't already) and navigate to the project root:
    ```bash
-   cd d:/webbieninjas/PROJECTS/subscription_watchdog
+   cd path/to/your/cloned-repo
    ```
 2. **Start a simple local server** (Python is the easiest):
    ```bash
