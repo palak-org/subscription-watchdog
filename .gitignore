@@ -1,0 +1,31 @@
+// Node.js & npm
+node_modules/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Environment files
+.env
+.env.*
+
+# IDE & editor configs
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Build artifacts
+/dist/
+/build/
+
+# Antigravity IDE artifacts
+*.gemini/
+
+# PDF.js worker (if downloaded locally)
+pdf.worker.min.js
