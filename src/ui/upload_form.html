@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Upload Form</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <style>
+    /* Full‑screen gradient background */
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      font-family: 'Inter', Arial, sans-serif;
+      background: linear-gradient(135deg, #e0eafc, #cfdef3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Centered card */
+    .card {
+      background: #ffffff;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+      width: 380px;
+      max-width: 90%;
+      text-align: center;
+    }
+
+    #dropZone {
+      border: 2px dashed #aac0d9;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 1rem 0;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    #dropZone.hover {
+      background: #f0f8ff;
+      border-color: #5b9bd5;
+    }
+
+    #fileInput {
+      display: none;
+    }
+
+    .error {
+      color: #d93025;
+      margin-top: 0.5rem;
+    }
+
+    button {
+      background: #5b9bd5;
+      color: #fff;
+      border: none;
+      padding: 0.6rem 1.2rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background: #4a86c5;
+    }
+
+    button:disabled {
+      background: #b0c4de;
+      cursor: not-allowed;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    #authButtons {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="card" id="uploadCard">
+    <h2>File Upload</h2>
+    <div id="authWarning" class="error hidden"></div>
+    <div id="authButtons">
+      <button id="mockLoginBtn">Mock Login</button>
+      <button id="logoutBtn" class="hidden">Logout</button>
+    </div>
+    <form id="uploadForm" enctype="multipart/form-data">
+      <div id="dropZone">Drag &amp; drop a .csv or .pdf file here, or click to select</div>
+      <input type="file" id="fileInput" name="file" accept=".csv,.pdf">
+      <button type="submit" id="submitBtn" class="hidden">Upload</button>
+      <div class="error" id="errorMsg"></div>
+    </form>
+  </div>
+  <script type="module">
+    // Updated imports
+    import { validateFileStructure, sanitizeText } from '../security/sanitization.js';
+    import { verifyUserAccess, login, logout } from '../security/auth.js';
+    import { parseStatement } from '../parser/statement_parser.js';
+
+    // ---------- Form submission handling ----------
+    document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      // Ensure user is authenticated before processing
+      if (!verifyUserAccess()) {
+        console.warn('Unauthenticated user attempted to submit.');
+        return;
+      }
+      validateFile();
+      if (errorMsg.textContent) return; // validation failed
+      const file = fileInput.files[0];
+      try {
+        const parsedJson = await parseStatement(file);
+        console.log('Output ready for M2 Extraction Agent:', parsedJson);
+      } catch (err) {
+        console.error('Parsing failed:', err);
+        errorMsg.textContent = 'Failed to parse the file.';
+      }
+    });
+    const fileInput = document.getElementById('fileInput');
+    const errorMsg = document.getElementById('errorMsg');
+    const authWarning = document.getElementById('authWarning');
+    const mockLoginBtn = document.getElementById('mockLoginBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    const dropZone = document.getElementById('dropZone');
+
+    // ---------- Auth handling ----------
+    function initAuth() {
+      // Ensure both buttons start hidden to avoid stale classes
+      mockLoginBtn.classList.add('hidden');
+      logoutBtn.classList.add('hidden');
+
+      if (verifyUserAccess()) {
+        // Authenticated state
+        authWarning.classList.add('hidden');
+        logoutBtn.classList.remove('hidden');
+        mockLoginBtn.classList.add('hidden');
+        submitBtn.classList.remove('hidden');
+        fileInput.disabled = false;
+        dropZone.style.opacity = '1';
+        dropZone.style.cursor = 'pointer';
+        // Attach logout handler (only once)
+        logoutBtn.addEventListener('click', () => {
+          logout();
+          location.reload();
+        });
+      } else {
+        // Unauthenticated state
+        authWarning.textContent = 'Security Error: Unauthorized access. Please log in.';
+        authWarning.classList.remove('hidden');
+        mockLoginBtn.classList.remove('hidden');
+        logoutBtn.classList.add('hidden');
+        submitBtn.classList.add('hidden');
+        fileInput.disabled = true;
+        dropZone.style.opacity = '0.5';
+        dropZone.style.cursor = 'not-allowed';
+        mockLoginBtn.addEventListener('click', () => {
+          login('test', 'test');
+          location.reload();
+        });
+      }
+    }
+
+    // ---------- Drag & Drop & Validation ----------
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('hover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('hover'));
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('hover');
+      const files = e.dataTransfer.files;
+      if (files.length) fileInput.files = files;
+      validateFile();
+    });
+    fileInput.addEventListener('change', validateFile);
+
+    function validateFile() {
+      errorMsg.textContent = '';
+      const file = fileInput.files[0];
+      if (!file) return;
+      if (!validateFileStructure(file)) {
+        errorMsg.textContent = 'Invalid file. Must be a .csv or .pdf under 5 MB.';
+        fileInput.value = '';
+        return;
+      }
+      console.log('Security check passed: Ready for parser');
+    }
+
+
+
+    // Initialize auth flow on page load
+    initAuth();
+  </script>
+</body>
+
+</html>
