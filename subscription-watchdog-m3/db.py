@@ -6,19 +6,20 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL")
-
 def get_connection():
     """
     Establish and return a connection to the Neon PostgreSQL database.
     Uses RealDictCursor to return query results as dictionaries.
     """
-    if not DATABASE_URL:
+    db_url = os.getenv("DATABASE_URL")
+    if not db_url:
+        env_keys = list(os.environ.keys())
+        commit_sha = os.getenv("RAILWAY_GIT_COMMIT_SHA", "unknown")
         raise ValueError(
             "DATABASE_URL environment variable is not set. "
-            "Please ensure you have configured it in your .env file."
+            f"Active Commit: {commit_sha}. Available env keys: {env_keys}"
         )
     return psycopg2.connect(
-        DATABASE_URL,
+        db_url,
         cursor_factory=psycopg2.extras.RealDictCursor
     )

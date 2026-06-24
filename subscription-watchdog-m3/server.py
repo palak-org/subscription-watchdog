@@ -1,11 +1,20 @@
 from mcp.server.fastmcp import FastMCP
+from mcp.server.transport_security import TransportSecuritySettings
 from db import get_connection
 import os
 import datetime
 from decimal import Decimal
 
-# Initialize FastMCP Server
-mcp = FastMCP("subscription-watchdog-m3")
+# Read PORT from environment
+port = int(os.getenv("PORT", 8000))
+
+# Initialize FastMCP Server with host, port and disabled DNS rebinding protection for cloud deployment
+mcp = FastMCP(
+    "subscription-watchdog-m3",
+    host="0.0.0.0",
+    port=port,
+    transport_security=TransportSecuritySettings(enable_dns_rebinding_protection=False)
+)
 
 def serialize_value(val):
     """Helper to convert database types to JSON-serializable types."""
@@ -268,4 +277,4 @@ if __name__ == "__main__":
     import sys
     # When debugging or inspecting, FastMCP can run using stdio
     # But by default, if run directly, it will run as streamable-http as required.
-    mcp.run(transport="streamable-http", host="0.0.0.0", port=8000)
+    mcp.run(transport="streamable-http")
