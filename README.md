@@ -69,7 +69,8 @@ Bank Statement (CSV / PDF)
 │  │    Extractor Agent                       │
 │  │    → Price & billing cycle               │
 │  └── Output: Structured subscription        │
-│       objects → passed to Phase 3           │
+│  |     objects → passed to Phase 3           |
+|  |------- final Readme                      |
 └──────────────────┬──────────────────────────┘
                    │ Subscription list
                    ▼
@@ -110,7 +111,7 @@ Bank Statement (CSV / PDF)
 │  ├── ui/app.py — Streamlit Web UI           │
 │  ├── Email drafts + Watchdog Report         │
 │  │    → passes final data to Lead           │
-│  └── Final report + README + submit Jul 6   │
+│  └── Final report + submit Jul 6   │
 └──────────────────┬──────────────────────────┘
                    │
                    ▼
