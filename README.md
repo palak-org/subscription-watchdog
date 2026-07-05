@@ -26,10 +26,9 @@ Manual review means reading every statement line, mentally tagging subscriptions
 
 ## 🎯 Project Goals
 
-1. **Automatic subscription detection** — extract name, currency, and amount from raw statement text or uploaded CSV/PDF
+1. **Automatic subscription detection** — extract name, currency, and amount from raw statement text
 2. **Change detection over time** — SQLite memory stores previous scans; alerts on what's new or changed
 3. **Usage-based alerts** — flag subscriptions unused for extended periods
-4. **Actionable output** — don't just inform; generate a cancellation email on the spot
 
 ---
 
